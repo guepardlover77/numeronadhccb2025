@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Numéro d'anonymat</title>
+</head>
+<body style="font-family:sans-serif;text-align:center;margin-top:50px;">
+    <h1>Consultation du numéro d'anonymat</h1>
+    <p>Entrez votre nom complet :</p>
+    <input id="nom" type="text" placeholder="Exemple: Alice Dupont">
+    <button onclick="fetchNumber()">Rechercher</button>
+    <p id="resultat"></p>
+
+    <script>
+        function fetchNumber() {
+            let nom = document.getElementById('nom').value;
+            fetch('/get_number', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'nom=' + encodeURIComponent(nom)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('resultat').innerText = data.result;
+            });
+        }
+    </script>
+</body>
+</html>
+
+
