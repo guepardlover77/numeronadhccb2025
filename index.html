@@ -10,13 +10,20 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            justify-content: flex-start;
+            min-height: 100vh;
             margin: 0;
             background-color: #f4f4f9;
+            padding: 20px;
+        }
+        img {
+            max-width: 200px;
+            height: auto;
+            margin: 20px 0;
         }
         h1 {
             color: #333;
+            margin-bottom: 10px;
         }
         input, button {
             padding: 10px;
@@ -51,8 +58,11 @@
 </head>
 <body>
 
+    <!-- Ton image personnalisée -->
+    <img src="logo.png" alt="Logo Tutorat">
+
     <h1>Vérifiez votre numéro d'anonymat</h1>
-    <p>Entrez votre nom complet tel qu'il a été communiqué :</p>
+    <p>NOM Prénom</p>
     <input id="nom" type="text" placeholder="Exemple : Alice Dupont">
     <button onclick="chercherNumero()">Vérifier</button>
 
@@ -64,11 +74,11 @@
             const resultatDiv = document.getElementById("resultat");
 
             if (!nom) {
-                resultatDiv.textContent = "⚠️ Veuillez entrer un nom.";
+                resultatDiv.textContent = "Veuillez entrer un nom.";
                 return;
             }
 
-            resultatDiv.textContent = "⏳ Recherche en cours...";
+            resultatDiv.textContent = "⏳";
 
             try {
                 const response = await fetch('data.json');
