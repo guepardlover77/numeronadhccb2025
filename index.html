@@ -2,30 +2,89 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Numéro d'anonymat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numéro d'anonymat étudiant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultat {
+            margin-top: 20px;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: white;
+            min-height: 30px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
-<body style="font-family:sans-serif;text-align:center;margin-top:50px;">
-    <h1>Consultation du numéro d'anonymat</h1>
-    <p>Entrez votre nom complet :</p>
-    <input id="nom" type="text" placeholder="Exemple: Alice Dupont">
-    <button onclick="fetchNumber()">Rechercher</button>
-    <p id="resultat"></p>
+<body>
+
+    <h1>Vérifiez votre numéro d'anonymat</h1>
+    <p>Entrez votre nom complet tel qu'il a été communiqué :</p>
+    <input id="nom" type="text" placeholder="Exemple : Alice Dupont">
+    <button onclick="chercherNumero()">Vérifier</button>
+
+    <div id="resultat">Veuillez entrer votre nom.</div>
 
     <script>
-        function fetchNumber() {
-            let nom = document.getElementById('nom').value;
-            fetch('/get_number', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'nom=' + encodeURIComponent(nom)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('resultat').innerText = data.result;
-            });
+        async function chercherNumero() {
+            const nom = document.getElementById("nom").value.trim();
+            const resultatDiv = document.getElementById("resultat");
+
+            if (!nom) {
+                resultatDiv.textContent = "⚠️ Veuillez entrer un nom.";
+                return;
+            }
+
+            resultatDiv.textContent = "⏳ Recherche en cours...";
+
+            try {
+                const response = await fetch('data.json');
+                const data = await response.json();
+
+                if (data[nom]) {
+                    resultatDiv.textContent = `🎉 Votre numéro d'anonymat est : ${data[nom]}`;
+                } else {
+                    resultatDiv.textContent = "❌ Nom non trouvé. Vérifiez l'orthographe.";
+                }
+            } catch (error) {
+                console.error(error);
+                resultatDiv.textContent = "🚨 Erreur lors de la recherche. Veuillez réessayer plus tard.";
+            }
         }
     </script>
+
 </body>
 </html>
-
-
