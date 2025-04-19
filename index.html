@@ -54,47 +54,145 @@
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        #suggestions {
+            margin-top: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .suggestion {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .suggestion:hover {
+            background-color: #d0d0d0;
+        }
     </style>
 </head>
 <body>
-
     <!-- Ton image personnalisée -->
     <img src="logo.png" alt="Logo Tutorat">
-
     <h1>Vérifiez votre numéro d'anonymat</h1>
-    <p>NOM Prénom</p>
-    <input id="nom" type="text" placeholder="Exemple : Alice Dupont">
+    <p>Entrez votre NOM, Prénom ou les deux</p>
+    <input id="nom" type="text" placeholder="Exemple : Dupont Alice ou Dupont ou Alice">
     <button onclick="chercherNumero()">Vérifier</button>
-
     <div id="resultat">Veuillez entrer votre nom.</div>
-
+    <div id="suggestions"></div>
+    
     <script>
+        // Écouter l'événement "Entrée" sur le champ de saisie
+        document.getElementById("nom").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                chercherNumero();
+            }
+        });
+        
         async function chercherNumero() {
-            const nom = document.getElementById("nom").value.trim();
+            const recherche = document.getElementById("nom").value.trim();
             const resultatDiv = document.getElementById("resultat");
-
-            if (!nom) {
+            const suggestionsDiv = document.getElementById("suggestions");
+            
+            suggestionsDiv.innerHTML = "";
+            
+            if (!recherche) {
                 resultatDiv.textContent = "Veuillez entrer un nom.";
                 return;
             }
-
+            
             resultatDiv.textContent = "⏳";
-
+            
             try {
                 const response = await fetch('data.json');
                 const data = await response.json();
-
-                if (data[nom]) {
-                    resultatDiv.textContent = `🎉 Votre numéro d'anonymat est : ${data[nom]}`;
-                } else {
+                
+                // Normaliser la recherche (supprimer les accents, mettre en minuscule)
+                const rechercheNormalisee = normaliserTexte(recherche);
+                
+                // Recherche exacte
+                let resultatsExacts = [];
+                // Recherche partielle
+                let resultatsPartiels = [];
+                // Résultats pour recherche par prénom uniquement
+                let resultatsPrenoms = [];
+                // Résultats pour recherche par nom uniquement
+                let resultatsNoms = [];
+                
+                for (const [nomComplet, numero] of Object.entries(data)) {
+                    const nomNormalise = normaliserTexte(nomComplet);
+                    
+                    // Vérifier si c'est une correspondance exacte
+                    if (nomNormalise === rechercheNormalisee) {
+                        resultatsExacts.push({ nomComplet, numero });
+                        continue;
+                    }
+                    
+                    // Vérifier si la recherche est contenue dans le nom complet
+                    if (nomNormalise.includes(rechercheNormalisee)) {
+                        resultatsPartiels.push({ nomComplet, numero });
+                        continue;
+                    }
+                    
+                    // Séparer le nom et le prénom
+                    const [nom, prenom] = nomComplet.split(' ').map(part => normaliserTexte(part));
+                    
+                    // Vérifier si la recherche correspond au prénom
+                    if (prenom && prenom === rechercheNormalisee) {
+                        resultatsPrenoms.push({ nomComplet, numero });
+                        continue;
+                    }
+                    
+                    // Vérifier si la recherche correspond au nom
+                    if (nom && nom === rechercheNormalisee) {
+                        resultatsNoms.push({ nomComplet, numero });
+                    }
+                }
+                
+                // Combiner tous les résultats, en donnant la priorité aux correspondances exactes
+                const tousResultats = [
+                    ...resultatsExacts,
+                    ...resultatsPartiels,
+                    ...resultatsPrenoms,
+                    ...resultatsNoms
+                ];
+                
+                if (tousResultats.length === 0) {
                     resultatDiv.textContent = "❌ Nom non trouvé. Vérifiez l'orthographe.";
+                } else if (tousResultats.length === 1) {
+                    // Un seul résultat trouvé
+                    resultatDiv.textContent = `🎉 Votre numéro d'anonymat est : ${tousResultats[0].numero}`;
+                } else {
+                    // Plusieurs résultats trouvés - afficher les suggestions
+                    resultatDiv.textContent = "Plusieurs résultats trouvés. Veuillez sélectionner votre nom :";
+                    
+                    tousResultats.forEach(resultat => {
+                        const suggestionElem = document.createElement("div");
+                        suggestionElem.classList.add("suggestion");
+                        suggestionElem.textContent = resultat.nomComplet;
+                        suggestionElem.onclick = function() {
+                            resultatDiv.textContent = `🎉 Votre numéro d'anonymat est : ${resultat.numero}`;
+                            suggestionsDiv.innerHTML = "";
+                            document.getElementById("nom").value = resultat.nomComplet;
+                        };
+                        suggestionsDiv.appendChild(suggestionElem);
+                    });
                 }
             } catch (error) {
                 console.error(error);
                 resultatDiv.textContent = "🚨 Erreur lors de la recherche. Veuillez réessayer plus tard.";
             }
         }
+        
+        // Fonction pour normaliser le texte (retirer les accents, majuscules, etc.)
+        function normaliserTexte(texte) {
+            return texte
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprimer les accents
+                .replace(/[^a-z0-9\s]/g, ""); // Supprimer les caractères spéciaux
+        }
     </script>
-
 </body>
 </html>
